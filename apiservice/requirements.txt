@@ -1,3 +1,5 @@
 environs
-fastapi
-uvicorn
+fastapi==0.97.0
+uvicorn==0.22.0
+celery==5.3.1
+redis==4.5.5
