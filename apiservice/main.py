@@ -19,7 +19,7 @@ async def insert_exception_handler(request: Request, exc: InsertException):
         status_code=420,
         content={
             "message": (
-                f"Oops! Seems like {exc.name} raised.\n\n Or something else wrong"
+                f"Oops! Seems like {exc.name} raised.\nOr something else wrong"
             )
         },
     )
@@ -38,4 +38,4 @@ async def shutdown():
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8083)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
