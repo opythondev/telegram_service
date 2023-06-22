@@ -1,4 +1,5 @@
 volumes:
+  pgdata:
   apidata:
   parserdata:
   queuedata:
@@ -11,6 +12,7 @@ services:
     restart: always
     hostname: postgres
     container_name: postgres
+    user: postgres
     env_file:
       - ./local.env
       # - ./remote.env
@@ -63,8 +65,8 @@ services:
     hostname: apiservice
     restart: always
     env_file:
-      # - ./local.env
-      - ./remote.env
+      - ./local.env
+      # - ./remote.env
     networks:
       - app-tier
     ports:
@@ -72,47 +74,47 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: uvicorn main:app --host 0.0.0.0 --port 8083 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./apiservice:/code
       # - apidata:/code
 
-  queueservice:
-    build: ./queueservice/
-    container_name: queueservice
-    hostname: queueservice
-    restart: always
-    env_file:
-      - ./local.env
-      # - ./remote.env
-    networks:
-      - app-tier
-    ports:
-      - 8084:8084
-    depends_on:
-      - apiservice
-    # command: uvicorn main:app --host 0.0.0.0 --port 8083 --reload
-    command: python main.py
-    volumes:
-      - ./queueservice:/code
+  # queueservice:
+  #   build: ./queueservice/
+  #   container_name: queueservice
+  #   hostname: queueservice
+  #   restart: always
+  #   env_file:
+  #     - ./local.env
+  #     # - ./remote.env
+  #   networks:
+  #     - app-tier
+  #   ports:
+  #     - 8084:8084
+  #   depends_on:
+  #     - apiservice
+  #   # command: uvicorn main:app --host 0.0.0.0 --port 8083 --reload
+  #   command: python main.py
+  #   volumes:
+  #     - ./queueservice:/code
       # - queuedata:/code
 
-  dataparser:
-    build: ./dataparser/
-    container_name: dataparser
-    hostname: dataparser
-    restart: always
-    env_file:
-      - ./local.env
-      # - ./remote.env
-    networks:
-      - app-tier
-    ports:
-      - 8085:8085
-    depends_on:
-      - apiservice
-      - queueservice
-    command: python run.py
-    volumes:
-      - ./dataparser:/code
-      # - dataparser:/code
+  # dataparser:
+  #   build: ./dataparser/
+  #   container_name: dataparser
+  #   hostname: dataparser
+  #   restart: always
+  #   env_file:
+  #     - ./local.env
+  #     # - ./remote.env
+  #   networks:
+  #     - app-tier
+  #   ports:
+  #     - 8085:8085
+  #   depends_on:
+  #     - apiservice
+  #     - queueservice
+  #   command: python run.py
+  #   volumes:
+  #     - ./dataparser:/code
+  #     # - dataparser:/code
