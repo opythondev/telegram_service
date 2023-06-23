@@ -1,37 +1,64 @@
 import datetime
-from typing import Any
+import uuid
+import pickle
+from typing import Any, Union
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from celery.app import Celery
 
 from redis import Redis
 from .local_task_storage import LocalTaskStorage
 from .task import _Task
 
 
+scheduler = AsyncIOScheduler()
+
+
 class TaskManager:
 
-    def __init__(self, broker: Redis | None):
+    def __init__(self, broker: Redis | None = None):
         self.storage = LocalTaskStorage({})
         self.broker = broker
 
-    async def create_task(self, foo: Any, trigger: str, run_time: datetime, seconds: int = 0, kwarg: dict = None):
+
+    async def create_task_(self, foo: Any, trigger: str | None = None,
+                          run_time: Union[datetime.datetime, None] = None,
+                          kwarg: dict = None) -> _Task:
 
         match trigger:
+
             case "date":
-                return _Task(foo=foo, trigger="date",
-                         run_time=datetime.datetime.now() + datetime.timedelta(seconds=), kwargs={"uid": 233652006})
-    async def add_task(self, task: _Task):
+                task_id = uuid.uuid4()
+                return _Task(foo=foo, trigger="date", task_id=task_id,
+                             run_time=run_time, kwargs=kwarg)
+            case "now":
+                task_id = uuid.uuid4()
+                return _Task(foo=foo, trigger="date", run_time=datetime.datetime.now() + datetime.timedelta(seconds=1),
+                             task_id=task_id, kwargs=kwarg)
+
+    async def add_local_task(self, task: _Task):
         self.storage.__dict__["storage"][str(task.task_id)] = task
         return task
 
-    async def removed(self, task_id: str):
+    async def remove_local_task(self, task_id: str):
         self.storage.__dict__['storage'].pop(task_id)
 
     async def run_task(self, tasks: list[_Task]):
+
         for task in tasks:
-            scheduler.add_job(task.foo, kwargs=task.kwargs)
-            await self.removed(task_id=str(task.task_id))
+            # scheduler.add_job(task.foo, kwargs=task.kwargs)
+            print("add task in queue Celery worker", await task.foo())
+            await self.remove_local_task(task_id=str(task.task_id))
 
     async def get_total_task(self):
         return len(self.storage.__dict__['storage'])
+
+    async def save_storage_in_broker(self, stor: LocalTaskStorage):
+        serialise = pickle.dumps(stor)
+        self.broker.hset("storage", key="storage", value=serialise)
+
+    async def load_storage_from_broker(self):
+        stor = self.broker.hget("storage", key="storage")
+        return pickle.loads(stor)
 
     async def run(self):
         date = datetime.datetime.now()
@@ -40,8 +67,16 @@ class TaskManager:
         for task_id, task in self.storage.storage.items():
             run_date = date - task.run_time
 
-            if not "day" in str(run_date):
+            if not "-1" in str(run_date):
                 executed_task.append(task)
 
         if executed_task:
             await self.run_task(tasks=executed_task)
+
+
+manager = TaskManager()
+
+
+async def check_tasks(manager: TaskManager):
+    await manager.run()
+
