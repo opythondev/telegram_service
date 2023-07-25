@@ -12,7 +12,7 @@ class UserData(BaseModel):
     user_name: str
     phone: str = "null"
     email: str = "null"
-    is_subscribed: Boolean = False
+    is_subscribed: bool = False
     create_at: datetime.datetime = datetime.datetime.utcnow()
     update_at: datetime.datetime = datetime.datetime.utcnow()
 

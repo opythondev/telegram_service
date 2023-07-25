@@ -6,9 +6,9 @@ metadata = MetaData()
 
 
 class ChannelTagData(BaseModel):
-    id: int
     channel_id: int
     title: str
+    id: int = None
 
 
 class ChannelTag(Base):
@@ -21,6 +21,5 @@ class ChannelTag(Base):
     )
 
     def __init__(self, channel_tag: ChannelTagData):
-        self.id = channel_tag.id
         self.channel_id = channel_tag.channel_id
         self.title = channel_tag.title
