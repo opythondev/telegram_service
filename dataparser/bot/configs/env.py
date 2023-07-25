@@ -1,6 +1,7 @@
 from os import getenv
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 # BOT CONNECTION PARAM
@@ -19,6 +20,8 @@ DB_NAME = getenv("DATABASE_NAME")
 
 REDIS_HOST = getenv("REDIS_HOST")
 REDIS_PORT = int(getenv("REDIS_PORT"))
+REDIS_PASS = getenv("REDIS_PASS")
+
 
 # CONTACTS EMAIL
 

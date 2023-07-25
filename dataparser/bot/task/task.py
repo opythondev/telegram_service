@@ -9,7 +9,7 @@ class _Task:
     """ task data unit """
     task_id: uuid
     trigger: str = "date"
-    run_time: Union[datetime, None] = None
+    run_time: Union[datetime.datetime, None] = None
     kwargs: dict = None
     foo: Any = None
 

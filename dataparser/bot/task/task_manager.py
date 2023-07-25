@@ -3,12 +3,12 @@ import uuid
 import pickle
 from typing import Any, Union
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from celery.app import Celery
+# from celery.app import Celery
+from bot.database.Redis import RedisClient
 
 from redis import Redis
 from .local_task_storage import LocalTaskStorage
 from .task import _Task
-
 
 scheduler = AsyncIOScheduler()
 
@@ -19,10 +19,9 @@ class TaskManager:
         self.storage = LocalTaskStorage({})
         self.broker = broker
 
-
     async def create_task_(self, foo: Any, trigger: str | None = None,
-                          run_time: Union[datetime.datetime, None] = None,
-                          kwarg: dict = None) -> _Task:
+                           run_time: Union[datetime.datetime, None] = None,
+                           kwarg: dict = None) -> _Task:
 
         match trigger:
 
@@ -45,8 +44,7 @@ class TaskManager:
     async def run_task(self, tasks: list[_Task]):
 
         for task in tasks:
-            # scheduler.add_job(task.foo, kwargs=task.kwargs)
-            print("add task in queue Celery worker", await task.foo())
+            scheduler.add_job(task.foo, kwargs=task.kwargs)
             await self.remove_local_task(task_id=str(task.task_id))
 
     async def get_total_task(self):
@@ -79,4 +77,14 @@ manager = TaskManager()
 
 async def check_tasks(manager: TaskManager):
     await manager.run()
+
+
+async def add_task_to_local_queue():
+    redis = RedisClient()
+
+    listener = await redis.create_listener_api_task()
+
+    for msg in listener.listen():
+        # await manager.create_task_(foo=, trigger="now")
+        print(msg)
 
