@@ -4,28 +4,26 @@ from database.methods.main import Database
 from database.models.task import TaskData, Task
 from service.s_task import STask
 
-
-test_data = {
-    "type": "channel",
-    "user_id": 233652006,
-    "id": 0,
-    "status": "new"
-}
-urls = "https://t.me/openvocallessons:https://t.me/fastapiru:https://t.me/ethernitycloud"
+import unittest
 
 
-async def get_id():
-    t_data = TaskData(type=test_data['type'], user_id=test_data['user_id'], status=test_data['status'])
+class TestTask(unittest.TestCase):
 
-    test_case = STask(task_data=t_data, urls=urls)
-    task_id = await test_case.add_task_event()
-    return task_id
+    def test_add_task(self):
+        self.assertEqual('foo'.upper(), 'FOO')
+
+    # def test_isupper(self):
+    #     self.assertTrue('FOO'.isupper())
+    #     self.assertFalse('Foo'.isupper())
+    #
+    # def test_split(self):
+    #     s = 'hello world'
+    #     self.assertEqual(s.split(), ['hello', 'world'])
+    #     # check that s.split fails when the separator is not a string
+    #     with self.assertRaises(TypeError):
+    #         s.split(2)
 
 
-def start():
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(get_id())
+if __name__ == '__main__':
+    unittest.main()
 
-
-if __name__ == "__main__":
-    start()

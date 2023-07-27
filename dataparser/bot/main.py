@@ -3,17 +3,12 @@ import logging
 from telethon import TelegramClient
 
 from bot.configs.env import API_ID, API_HASH
-from bot.task.task_manager import scheduler, manager, check_tasks, add_task_to_local_queue
+from bot.msg_broker.broker_listener import init_task_listener
 
 
 async def __on_start_up():
-
-    logging.info("INIT on_start_up")
-
-    scheduler.add_job(func=check_tasks, trigger="cron", minute="*/1", kwargs={"manager": manager})
-    scheduler.add_job(func=add_task_to_local_queue, trigger="cron", minute="*/1")
-
-    scheduler.start()
+    # INIT SUBSCRIBE WITH JOB BROKER
+    await init_task_listener()
 
 
 def start_bot():

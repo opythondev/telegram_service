@@ -22,7 +22,7 @@ class RedisClient:
     async def create_listener_api_task(self):
         with self._connect_redis() as redis_cli:
             listener = redis_cli.pubsub()
-            listener.subscribe("tasks-api-to-dataparser")
+            listener.subscribe("new_job_for::bot")
 
             return listener
 

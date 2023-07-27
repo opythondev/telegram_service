@@ -2,7 +2,7 @@ import datetime
 
 from sqlalchemy import Column, BigInteger, String, Table, MetaData, TIMESTAMP
 from pydantic import BaseModel
-from database.main import Base
+from bot.database.main import Base
 
 metadata = MetaData()
 
@@ -18,7 +18,7 @@ class TaskData(BaseModel):
 
 class Task(Base):
     __table__ = Table(
-        "task",
+        "msg_broker",
         metadata,
         Column("id", BigInteger, primary_key=True),
         Column("type", String, nullable=False),

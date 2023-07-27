@@ -1,5 +1,8 @@
+import json
+
 import redis
 from config.env import R_PASS, R_HOST, R_PORT
+from database.models.task import TaskData
 
 
 class RedisClient:
@@ -17,3 +20,8 @@ class RedisClient:
         else:
             return redis.Redis(host=self.host, port=self.port, db=self.db,
                                decode_responses=True)
+
+    async def pub_task(self, chanel: str,  data: dict):
+        with self._connect_redis() as redis_cli:
+            redis_cli.publish(chanel, json.dumps(data, indent=4))
+
