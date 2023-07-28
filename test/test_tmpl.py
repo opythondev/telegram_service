@@ -1,5 +1,3 @@
-import pytests
-
 
 def test_tmp():
     a = 1
