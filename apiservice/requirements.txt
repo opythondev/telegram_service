@@ -1,5 +1,4 @@
 environs
-
 fastapi~=0.100.0
 SQLAlchemy~=2.0.19
 python-dotenv~=1.0.0
