@@ -1,0 +1,118 @@
+volumes:
+  apidata:
+  parserdata:
+  queuedata:
+  redisdata:
+networks:
+  app-tier:
+services:
+  db:
+    image: postgres:15.3
+    restart: always
+    hostname: postgres
+    container_name: postgres
+    env_file:
+      - ./local.env
+      # - ./remote.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    networks:
+      - app-tier
+    ports:
+      - 5432:5432
+
+  adminer:
+    image: adminer:4.8.1
+    restart: unless-stopped
+    hostname: adminer
+    container_name: adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-tier
+    ports:
+      - 9999:8080
+
+  redis:
+    image: redis
+    build: ./redis/
+    hostname: redis
+    container_name: redis
+    mem_limit: 128m
+    mem_reservation: 64M
+    restart: always
+    networks:
+      - app-tier
+    volumes:
+      - redisdata:/data
+    command: redis-server ./redis.conf
+    ports:
+     - 6379:6379
+
+  apiservice:
+    build: ./apiservice/
+    container_name: apiservice
+    hostname: apiservice
+    restart: always
+    env_file:
+      # - ./local.env
+      - ./remote.env
+    networks:
+      - app-tier
+    ports:
+      - 8083:8083
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8083 --reload
+    volumes:
+      - ./apiservice:/code
+      # - apidata:/code
+
+  queueservice:
+    build: ./queueservice/
+    container_name: queueservice
+    hostname: queueservice
+    restart: always
+    env_file:
+      - ./local.env
+      # - ./remote.env
+    networks:
+      - app-tier
+    ports:
+      - 8084:8084
+    depends_on:
+      - apiservice
+    # command: uvicorn main:app --host 0.0.0.0 --port 8083 --reload
+    command: python main.py
+    volumes:
+      - ./queueservice:/code
+      # - queuedata:/code
+
+  dataparser:
+    build: ./dataparser/
+    container_name: dataparser
+    hostname: dataparser
+    restart: always
+    env_file:
+      - ./local.env
+      # - ./remote.env
+    networks:
+      - app-tier
+    ports:
+      - 8085:8085
+    depends_on:
+      - apiservice
+      - queueservice
+    command: python run.py
+    volumes:
+      - ./dataparser:/code
+      # - dataparser:/code
