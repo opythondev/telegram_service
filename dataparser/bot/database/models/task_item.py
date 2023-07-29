@@ -13,8 +13,6 @@ class TaskItemData(BaseModel):
     channel_id: int
     id: int = None
     status: str = "create"
-    create_at: datetime.datetime = datetime.datetime.utcnow()
-    finished_at: datetime.datetime = datetime.datetime.utcnow()
 
 
 class TaskItem(Base):
@@ -26,8 +24,8 @@ class TaskItem(Base):
         Column("channel_id", BigInteger, nullable=False),
         Column("target_url", String, nullable=False),
         Column("status", String, nullable=False),
-        Column("create_at", TIMESTAMP, nullable=False),
-        Column("finished_at", TIMESTAMP, nullable=False),
+        Column("create_at", TIMESTAMP, default=datetime.datetime.utcnow(), nullable=False),
+        Column("finished_at", TIMESTAMP, default=datetime.datetime.utcnow(), nullable=False),
     )
 
     def __init__(self, task_item: TaskItemData):
@@ -35,7 +33,5 @@ class TaskItem(Base):
         self.channel_id = task_item.channel_id
         self.target_url = task_item.target_url
         self.status = task_item.status
-        self.create_at = task_item.create_at
-        self.finished_at = task_item.finished_at
         if task_item.id != 0:
             self.id = task_item.id

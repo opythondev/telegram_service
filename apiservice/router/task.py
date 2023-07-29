@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
 from dependencies import get_token_header
 from database.models.task import TaskData
-from tasks import add_task_to_queue
+from service.s_task import STask
+from .utils import convert_task_to_dict
 
 router = APIRouter(
     prefix="/task",
@@ -13,4 +14,9 @@ router = APIRouter(
 
 @router.post("/add_task/")
 async def create_new_task(task_data: TaskData):
-    await add_task_to_queue(task_data=task_data)
+    task = STask(task_data=await convert_task_to_dict(task_data))
+    data = await task.send_task_to_bot()
+
+    return {"status": 200,
+            "data": data}
+

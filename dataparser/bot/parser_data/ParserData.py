@@ -1,8 +1,7 @@
-import datetime
-
-from bot.database.models.task import TaskData
-from bot.database.models.task_item import TaskItemData, TaskItem
-from bot.tasks import default_queue
+from bot.database.models.task_item import TaskItemData
+from bot.parser_data.utils import convert_dict_to_task
+from .utils import convert_task_item_to_dict, convert_dict_to_task_item
+from bot.tasks import add_task_item_in_db, add_parse_task
 from bot.database.methods.main import Database
 
 
@@ -12,12 +11,8 @@ class ParserData:
         self.uid = uid
         self.db = Database(uid=uid)
 
-    async def prepare_tasks_for_queue(self, data: dict):
-        task = await self._convert_dict_to_task(data)
-
-        await self.db.update_task(task_id=task.id, update_data={
-            "status": "process"
-        })
+    async def start_parse_event(self, data: dict):
+        task = await convert_dict_to_task(data)
 
         for target_url in task.urls.split("::"):
 
@@ -25,16 +20,31 @@ class ParserData:
                                      target_url=target_url,
                                      channel_id=0,
                                      id=0,
-                                     status="created",
-                                     create_at=datetime.datetime.utcnow(),
-                                     finished_at=datetime.datetime.utcnow())
+                                     status="created")
 
-            await self.db.add_task_item(TaskItem(task_item=task_item))
+            task_item = await convert_task_item_to_dict(task_item)
+            task_item_data_with_id = add_task_item_in_db.delay(task_item)
 
-    async def _convert_dict_to_task(self, data: dict):
-        return TaskData(type=data['type'],
-                        user_id=data['user_id'],
-                        urls=data['urls'],
-                        id=data['id'],
-                        status=data['status'],
-                        create_at=data['create_at'])
+    async def start_parsing(self, task_item: dict):
+        task = await convert_dict_to_task_item(task_item=task_item)
+
+
+class GroupParser:
+
+    def __init__(self, uid: int, task_data: TaskItemData):
+        self.task_data = task_data
+        self.db = Database(uid=uid)
+
+    async def _join(self):
+        ...
+
+    async def get_all_user(self):
+        ...
+
+    async def get_all_messages(self):
+        ...
+
+
+
+
+
