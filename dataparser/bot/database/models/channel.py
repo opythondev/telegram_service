@@ -1,6 +1,6 @@
 from sqlalchemy import Column, BigInteger, String, Integer, Table, MetaData
 from pydantic import BaseModel
-from database.main import Base
+from bot.database.main import Base
 
 metadata = MetaData()
 
@@ -11,6 +11,15 @@ class ChannelData(BaseModel):
     link: str
     description: str
     user_count: int
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "link": self.link,
+            "description": self.description,
+            "user_count": self.user_count
+        }
 
 
 class Channel(Base):

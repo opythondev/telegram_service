@@ -1,8 +1,7 @@
 import asyncio
-from typing import Any
 import functools
 from bot.database.methods.main import Database
-
+from bot.parser_data.group_parser import GroupParser
 from celery import Celery
 
 
@@ -18,7 +17,6 @@ def run_async_task(func):
         loop = asyncio.get_event_loop()
 
         return loop.run_until_complete(func(*args, **kwargs))
-
     return wrapper_run_async_task
 
 
@@ -32,5 +30,7 @@ def add_task_item_in_db(task_item: dict):
 
 @default_queue.task(serializer='json')
 @run_async_task
-def add_parse_task(task_data: dict):
-    ...
+def start_parsing_task(task_item: dict):
+    group = GroupParser(uid=task_item['uid'], task_data=task_item)
+    result = group.start_parsing()
+    return result

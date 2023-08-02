@@ -1,6 +1,6 @@
 from sqlalchemy import Column, BigInteger, String, Table, MetaData, Integer
 from pydantic import BaseModel
-from database.main import Base
+from bot.database.main import Base
 
 metadata = MetaData()
 

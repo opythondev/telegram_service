@@ -14,6 +14,20 @@ class TaskItemData(BaseModel):
     id: int = None
     status: str = "create"
 
+    def to_dict(self):
+        return {"task_id": self.task_id,
+                "target_url": self.target_url,
+                "channel_id": self.channel_id,
+                "id": self.id,
+                "status": self.status}
+
+    def dict_to_obj(self, item: dict):
+        return TaskItemData(task_id=item['task_id'],
+                            target_url=item['target_url'],
+                            channel_id=item['channel_id'],
+                            id=item['id'],
+                            status=item['status'])
+
 
 class TaskItem(Base):
     __table__ = Table(

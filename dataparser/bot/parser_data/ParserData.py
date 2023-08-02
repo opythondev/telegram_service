@@ -1,7 +1,7 @@
 from bot.database.models.task_item import TaskItemData
 from bot.parser_data.utils import convert_dict_to_task
-from .utils import convert_task_item_to_dict, convert_dict_to_task_item
-from bot.tasks import add_task_item_in_db, add_parse_task
+from .utils import convert_task_item_to_dict
+from bot.tasks import add_task_item_in_db, start_parsing_task
 from bot.database.methods.main import Database
 
 
@@ -13,7 +13,6 @@ class ParserData:
 
     async def start_parse_event(self, data: dict):
         task = await convert_dict_to_task(data)
-
         for target_url in task.urls.split("::"):
 
             task_item = TaskItemData(task_id=task.id,
@@ -22,27 +21,16 @@ class ParserData:
                                      id=0,
                                      status="created")
 
-            task_item = await convert_task_item_to_dict(task_item)
-            task_item_data_with_id = add_task_item_in_db.delay(task_item)
+            task_item_data_with_id = add_task_item_in_db.delay(task_item.to_dict()).get()
 
-    async def start_parsing(self, task_item: dict):
-        task = await convert_dict_to_task_item(task_item=task_item)
+            task_item_data_with_id['raw_data']['id'] = task_item_data_with_id['task_item_id']
+            task_item_data_with_id['raw_data']['uid'] = task.user_id
 
+            await self.add_task_to_parsing_queue(task_item=task_item_data_with_id)
 
-class GroupParser:
+    async def add_task_to_parsing_queue(self, task_item: dict):
+        return start_parsing_task.delay(task_item=task_item['raw_data']).get()
 
-    def __init__(self, uid: int, task_data: TaskItemData):
-        self.task_data = task_data
-        self.db = Database(uid=uid)
-
-    async def _join(self):
-        ...
-
-    async def get_all_user(self):
-        ...
-
-    async def get_all_messages(self):
-        ...
 
 
 
