@@ -13,6 +13,10 @@ class ParserData:
 
     async def start_parse_event(self, data: dict):
         task = await convert_dict_to_task(data)
+
+        # TODO fix update func
+        # await self.db.update_task(task_id=task.id, update_data={"status": "process"})
+
         for target_url in task.urls.split("::"):
 
             task_item = TaskItemData(task_id=task.id,
@@ -29,6 +33,13 @@ class ParserData:
             await self.add_task_to_parsing_queue(task_item=task_item_data_with_id)
 
     async def add_task_to_parsing_queue(self, task_item: dict):
+
+        task_item_update = {
+            "status": "process"
+        }
+
+        await self.db.update_task_item(task_item_id=task_item['raw_data']['id'], update_data=task_item_update)
+
         return start_parsing_task.delay(task_item=task_item['raw_data']).get()
 
 

@@ -12,7 +12,6 @@ class PostData(BaseModel):
     text: str
     title: str
     views_count: int
-    id: int = 0
     reactions_count: int = 0
     comments_channel_id: int = 0
     photo: str = "null"
