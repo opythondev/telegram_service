@@ -1,4 +1,5 @@
 import json
+import logging
 
 from telethon.tl.functions.channels import JoinChannelRequest, \
     GetFullChannelRequest
@@ -148,6 +149,7 @@ class GroupParser:
 
     async def compare_posts(self, new_posts: list[PostData],
                             old_posts: list[tuple]) -> dict:
+
         ids = [item[0] for item in old_posts]
         ids.sort()
 
@@ -178,7 +180,7 @@ class GroupParser:
                 "message_id": item.message_id,
                 "date": item.date,
                 "photo": item.photo,
-                "title": item.title,
+                "state": item.title,
                 "text": item.text,
                 "reactions_count": item.reactions_count,
                 "views_count": item.views_count,
@@ -196,48 +198,50 @@ class GroupParser:
 
         return new_chanel_data
 
-    async def create_post_entity(self, message_data: dict, channel_id: int):
+    async def create_post_entity(self, message_data: dict):
+        channel_id = message_data['peer_id']['channel_id']
         all_reactions_count = 0
 
         for reaction_item in message_data['reactions']['results']:
             all_reactions_count += reaction_item['count']
 
+        try:
+            replies = message_data['replies']['channel_id']
+        except Exception as e:
+            logging.info(f"error: {e}")
+            replies = 0
+
         post_data_item = PostData(channel_id=channel_id,
                                   message_id=message_data['id'],
-                                  date=message_data['date'],
+                                  date=str(message_data['date']),
                                   text=message_data['message'],
-                                  title="None title",
+                                  title="new",
                                   views_count=message_data['views'],
                                   reactions_count=all_reactions_count,
-                                  comments_channel_id=message_data['replies'][
-                                      'channel_id'])
+                                  comments_channel_id=replies)
         return post_data_item
 
-    async def get_limited_messages(self, entity, channel_id: int, limit=10):
+    async def get_limited_messages(self, entity, limit=10):
 
         list_post_data = []
 
         async for msg in self.cli.iter_messages(entity=entity, limit=limit):
-            message = json.loads(msg.to_json())
 
             try:
                 list_post_data.append(
-                    await self.create_post_entity(message_data=message,
-                                                  channel_id=channel_id))
-            except Exception:
+                    await self.create_post_entity(message_data=msg.to_dict()))
+            except Exception as e:
+                logging.info(f"error: {e}")
                 continue
 
-        await self.update_last_10_messages(last_msg=list_post_data,
-                                           channel_id=channel_id)
+        # await self.update_last_10_messages(last_msg=list_post_data,
+        #                                    channel_id=channel_id)
 
         return list_post_data
 
     async def get_full_channel_info(self, entity):
         channel_info = await self.cli(GetFullChannelRequest(channel=entity))
         return channel_info
-
-    async def check_double(self, users: list):
-        ...
 
     async def add_unique_users(self, entity, channel_id: int):
 
@@ -257,15 +261,13 @@ class GroupParser:
         channel_info = await self.get_full_channel_info(entity=entity)
 
         full_info = channel_info.to_dict()
-        last_total_users_in_chanel = [item.user_count for item in
-                                      await self.db.get_channel(
-                                          channel_id=full_info['full_chat'][
-                                              'id'])]
-        count = full_info['full_chat']['participants_count']
-        return f"Новых подписчиков: {count - last_total_users_in_chanel[0]}"
 
-    async def compare_messages(self, messages):
-        ...
+        last_total_users_in_chanel = [item.user_count for item in await self.db.get_channel(
+            channel_id=full_info['full_chat']['id'])]
+
+        user_count = full_info['full_chat']['participants_count']
+
+        return f"Новых подписчиков: {user_count - last_total_users_in_chanel[0]}"
 
     async def get_users(self, entity) -> None | dict:
         try:
@@ -305,15 +307,11 @@ class GroupParser:
                         entity=entity)
                     full_channel_info = channel_info.to_dict()
 
-                    about = full_channel_info['full_chat']['about']
-                    co = full_channel_info['full_chat']['participants_count']
-
                     channel = ChannelData(id=entity_to_dict['id'],
                                           name=entity_to_dict['title'],
                                           link=task.target_url,
-                                          description=about,
-                                          user_count=co
-                                          )
+                                          description=full_channel_info['full_chat']['about'],
+                                          user_count=full_channel_info['full_chat']['participants_count'])
 
                     await self.create_chanel_in_db(chanel=channel)
 
@@ -324,11 +322,11 @@ class GroupParser:
                 else:
 
                     messages = await self.get_limited_messages(
-                        entity=entity,
-                        channel_id=entity_to_dict['id'])
+                        entity=entity)
 
                     print(messages)
 
+            # CHANGE STATUS
             task_item_update = {
                 "channel_id": task.channel_id,
                 "status": "success"
