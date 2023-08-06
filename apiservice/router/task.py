@@ -19,4 +19,3 @@ async def create_new_task(task_data: TaskData):
 
     return {"status": 200,
             "data": data}
-

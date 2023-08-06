@@ -1,8 +1,9 @@
 import datetime
 
-from sqlalchemy import Column, BigInteger, String, Integer, Boolean, Table, MetaData, TIMESTAMP
+from sqlalchemy import Column, BigInteger, String, Integer, Boolean, \
+    Table, MetaData, TIMESTAMP
 from pydantic import BaseModel
-from database.main import Base
+from bot.database.main import Base
 
 
 class UserData(BaseModel):
@@ -13,8 +14,6 @@ class UserData(BaseModel):
     phone: str = "null"
     email: str = "null"
     is_subscribed: bool = False
-    create_at: datetime.datetime = datetime.datetime.utcnow()
-    update_at: datetime.datetime = datetime.datetime.utcnow()
 
 
 metadata = MetaData()
@@ -31,8 +30,10 @@ class User(Base):
         Column("full_name", String, nullable=False),
         Column("user_name", String, nullable=False),
         Column("is_subscribed", Boolean, nullable=False),
-        Column("create_at", TIMESTAMP, nullable=False),
-        Column("update_at", TIMESTAMP, nullable=False)
+        Column("create_at", TIMESTAMP, default=datetime.datetime.utcnow(),
+               nullable=False),
+        Column("update_at", TIMESTAMP, default=datetime.datetime.utcnow(),
+               nullable=False)
     )
 
     def __init__(self, user: UserData):
@@ -43,5 +44,3 @@ class User(Base):
         self.email = user.email
         self.user_name = user.user_name
         self.is_subscribed = user.is_subscribed
-        self.create_at = user.create_at
-        self.update_at = user.update_at

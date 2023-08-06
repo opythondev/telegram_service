@@ -8,6 +8,3 @@ router = APIRouter(
     dependencies=[Depends(get_token_header)],
     responses={404: {"description": "Not found"}},
 )
-
-
-

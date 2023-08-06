@@ -6,7 +6,6 @@ metadata = MetaData()
 
 
 class TagData(BaseModel):
-    id: int
     title: str
 
 
@@ -19,8 +18,4 @@ class Tag(Base):
     )
 
     def __init__(self, tag: TagData):
-        self.id = tag.id
         self.title = tag.title
-
-
-

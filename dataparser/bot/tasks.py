@@ -31,6 +31,6 @@ def add_task_item_in_db(task_item: dict):
 @default_queue.task(serializer='json')
 @run_async_task
 def start_parsing_task(task_item: dict):
-    group = GroupParser(uid=task_item['uid'], task_data=task_item)
-    result = group.start_parsing()
+    job = GroupParser(uid=task_item['uid'], task_data=task_item)
+    result = job.start_parsing()
     return result

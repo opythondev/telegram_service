@@ -1,12 +1,11 @@
 from sqlalchemy import Column, BigInteger, String, Table, MetaData
 from pydantic import BaseModel
-from database.main import Base
+from bot.database.main import Base
 
 metadata = MetaData()
 
 
 class TagData(BaseModel):
-    id: int
     title: str
 
 
@@ -19,8 +18,4 @@ class Tag(Base):
     )
 
     def __init__(self, tag: TagData):
-        self.id = tag.id
         self.title = tag.title
-
-
-

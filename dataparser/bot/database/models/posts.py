@@ -10,12 +10,24 @@ class PostData(BaseModel):
     message_id: int
     date: str
     text: str
-    title: str
+    state: str
     views_count: int
-    id: int = 0
     reactions_count: int = 0
     comments_channel_id: int = 0
     photo: str = "null"
+
+    def to_dict(self):
+        return {
+            "channel_id": self.channel_id,
+            "message_id": self.message_id,
+            "date": self.date,
+            "text": self.text,
+            "state": self.state,
+            "views_count": self.views_count,
+            "reactions_count": self.reactions_count,
+            "comments_channel_id": self.comments_channel_id,
+            "photo": self.comments_channel_id
+        }
 
 
 class Post(Base):
@@ -27,7 +39,7 @@ class Post(Base):
         Column("message_id", BigInteger, nullable=False),
         Column("date", String, nullable=False),
         Column("photo", String),
-        Column("title", String, nullable=False),
+        Column("state", String, nullable=False),
         Column("text", String, nullable=False),
         Column("reactions_count", Integer),
         Column("views_count", Integer, nullable=False),
@@ -39,7 +51,7 @@ class Post(Base):
         self.message_id = post.message_id
         self.date = post.date
         self.photo = post.photo
-        self.title = post.title
+        self.state = post.title
         self.text = post.text
         self.reactions_count = post.reactions_count
         self.views_count = post.views_count

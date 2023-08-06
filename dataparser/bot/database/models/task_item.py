@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import Column, BigInteger, String, Integer, Table, MetaData, TIMESTAMP
+from sqlalchemy import Column, BigInteger, String, Table, MetaData, TIMESTAMP
 from pydantic import BaseModel
 from bot.database.main import Base
 
@@ -38,8 +38,10 @@ class TaskItem(Base):
         Column("channel_id", BigInteger, nullable=False),
         Column("target_url", String, nullable=False),
         Column("status", String, nullable=False),
-        Column("create_at", TIMESTAMP, default=datetime.datetime.utcnow(), nullable=False),
-        Column("finished_at", TIMESTAMP, default=datetime.datetime.utcnow(), nullable=False),
+        Column("create_at", TIMESTAMP, default=datetime.datetime.utcnow(),
+               nullable=False),
+        Column("finished_at", TIMESTAMP, default=datetime.datetime.utcnow(),
+               nullable=False)
     )
 
     def __init__(self, task_item: TaskItemData):

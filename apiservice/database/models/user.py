@@ -1,6 +1,7 @@
 import datetime
 
-from sqlalchemy import Column, BigInteger, String, Integer, Boolean, Table, MetaData, TIMESTAMP
+from sqlalchemy import Column, BigInteger, String, Integer, Boolean, \
+    Table, MetaData, TIMESTAMP
 from pydantic import BaseModel
 from database.main import Base
 

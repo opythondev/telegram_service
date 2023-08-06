@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from typing import Any
 
 from bot.database.main import async_session_maker
 
@@ -34,4 +33,3 @@ async def add_transaction_autoincrement(lst_obj: list):
         await s.commit()
 
         logging.info(f"item add in data base {datetime.now()}")
-

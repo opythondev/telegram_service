@@ -1,5 +1,3 @@
-from datetime import datetime as dt
-
 from bot.database.models.task import TaskData
 from bot.database.models.task_item import TaskItemData
 
@@ -25,8 +23,8 @@ async def convert_task_to_dict(task: TaskData) -> dict:
 async def convert_dict_to_task_item(task_item: dict) -> TaskItemData:
     return TaskItemData(task_id=task_item['task_id'],
                         target_url=task_item['target_url'],
-                        channel_id=0,
-                        id=0,
+                        channel_id=task_item['channel_id'],
+                        id=task_item['id'],
                         status="created")
 
 
