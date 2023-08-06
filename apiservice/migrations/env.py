@@ -5,6 +5,14 @@ from sqlalchemy import pool
 
 from alembic import context
 
+from database.models.channel import metadata as group_metadata
+from database.models.user import metadata as user_metadata
+from database.models.task import metadata as task_metadata
+from database.models.task_item import metadata as task_item_metadata
+from database.models.channel_tag import metadata as channel_tag_metadata
+from database.models.posts import metadata as posts_metadata
+from database.models.tag import metadata as tag_metadata
+from database.models.user_channel import metadata as user_channel_metadata
 from config.env import DB_NAME, DB_HOST, DB_PASS, DB_PORT, DB_LOGIN
 
 # this is the Alembic Config object, which provides
@@ -28,17 +36,14 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 
-from database.models.channel import metadata as group_metadata
-from database.models.user import metadata as user_metadata
-from database.models.task import metadata as task_metadata
-from database.models.task_item import metadata as task_item_metadata
-from database.models.channel_tag import metadata as channel_tag_metadata
-from database.models.posts import metadata as posts_metadata
-from database.models.tag import metadata as tag_metadata
-from database.models.user_channel import metadata as user_channel_metadata
-
-target_metadata = [group_metadata, user_metadata, task_metadata, task_item_metadata,
-                   channel_tag_metadata, posts_metadata, tag_metadata, user_channel_metadata]
+target_metadata = [group_metadata,
+                   user_metadata,
+                   task_metadata,
+                   task_item_metadata,
+                   channel_tag_metadata,
+                   posts_metadata,
+                   tag_metadata,
+                   user_channel_metadata]
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

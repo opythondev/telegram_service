@@ -17,6 +17,6 @@ class STask:
         task_id = await self.db.add_task(db_entity)
         self.task_data["id"] = task_id
 
-        await self.redis_cli.pub_task(f"new_job_for::bot", self.task_data)
+        await self.redis_cli.pub_task("new_job_for::bot", self.task_data)
 
         return self.task_data
