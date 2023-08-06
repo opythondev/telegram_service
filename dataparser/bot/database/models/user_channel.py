@@ -19,7 +19,8 @@ class UserChannel(Base):
         Column("id", BigInteger, primary_key=True),
         Column("user_id", BigInteger, nullable=False),
         Column("channel_id", BigInteger, nullable=False),
-        Column("create_at", TIMESTAMP, default=datetime.datetime.utcnow(), nullable=False)
+        Column("create_at", TIMESTAMP, default=datetime.datetime.utcnow(),
+               nullable=False)
     )
 
     def __init__(self, user_channel: UserChannelData):

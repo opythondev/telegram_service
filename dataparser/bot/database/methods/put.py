@@ -1,4 +1,3 @@
-
 import logging
 from datetime import datetime
 
@@ -20,7 +19,8 @@ async def update_task_by_id(task_id: int, data: dict):
 
             await s.execute(stmt)
             await s.commit()
-            logging.info(f"item update task ID: {task_id}in data base {datetime.now()}")
+            logging.info(f"item update task ID: {task_id}"
+                         f"in data base {datetime.now()}")
 
 
 async def update_task_item_by_id(task_item_id: int, data: dict):
@@ -33,4 +33,5 @@ async def update_task_item_by_id(task_item_id: int, data: dict):
                 .execution_options(synchronize_session="fetch")
             await s.execute(q)
             await s.commit()
-            logging.info(f"item update task ID: {task_item_id}in data base {datetime.now()}")
+            logging.info(f"item update task ID: {task_item_id}"
+                         f"in data base {datetime.now()}")

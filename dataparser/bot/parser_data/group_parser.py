@@ -1,7 +1,9 @@
 import json
 
-from telethon.tl.functions.channels import JoinChannelRequest, GetFullChannelRequest
-from telethon.tl.types import PeerChat, PeerUser, PeerChannel, Message as TelethonMessage, User as TelethonUser, \
+from telethon.tl.functions.channels import JoinChannelRequest, \
+    GetFullChannelRequest
+from telethon.tl.types import PeerChat, PeerUser, PeerChannel, \
+    Message as TelethonMessage, User as TelethonUser, \
     Channel as ChannelTelethon, Chat
 
 from bot.database.methods.main import Database
@@ -43,7 +45,8 @@ class GroupParser:
             return "Unexpected type"
 
     async def check_channel_in_db(self, channel_id: int) -> bool:
-        return any([item.id for item in await self.db.get_channel(channel_id=channel_id)])
+        return any([item.id for item in
+                    await self.db.get_channel(channel_id=channel_id)])
 
     async def concat_full_name(self, f_name: str, l_name: str) -> str:
 
@@ -102,7 +105,8 @@ class GroupParser:
                 id=item.id,
                 channel_id=item.channel_id,
                 user_id=item.user_id
-            ) for item in await self.db.get_all_users_in_channel(cid=channel_id)
+            ) for item in
+            await self.db.get_all_users_in_channel(cid=channel_id)
         }
 
         for user in users['all_users']:
@@ -110,20 +114,25 @@ class GroupParser:
                 if user['id'] in all_users_in_group:
                     continue
                 else:
-                    user_for_user_channel.append(await self._cast_to_user_data(user=user))
+                    user_for_user_channel.append(
+                        await self._cast_to_user_data(user=user))
             else:
-                user_list.append(User(await self._cast_to_user_data(user=user)))
-                user_for_user_channel.append(await self._cast_to_user_data(user=user))
+                user_list.append(
+                    User(await self._cast_to_user_data(user=user)))
+                user_for_user_channel.append(
+                    await self._cast_to_user_data(user=user))
 
         if user_list:
             await self.db.add_users(users=user_list)
 
         if user_for_user_channel:
-            await self.create_userchannel_in_db(users=user_for_user_channel, channel_id=channel_id)
+            await self.create_userchannel_in_db(users=user_for_user_channel,
+                                                channel_id=channel_id)
 
         return user_for_user_channel
 
-    async def create_userchannel_in_db(self, users: list[UserData], channel_id: int):
+    async def create_userchannel_in_db(self, users: list[UserData],
+                                       channel_id: int):
 
         user_channel_list = []
 
@@ -137,14 +146,15 @@ class GroupParser:
 
         await self.db.add_user_channel(items=user_channel_list)
 
-    async def compare_posts(self, new_posts: list[PostData], old_posts: list[tuple]) -> dict:
+    async def compare_posts(self, new_posts: list[PostData],
+                            old_posts: list[tuple]) -> dict:
         ids = [item[0] for item in old_posts]
         ids.sort()
 
-        old_posts = {item[1]:
-                         {"id": item[0],
-                          "message_id": item[1]} for item in old_posts}
+        old_posts = {item[1]: {"id": item[0],
+                               "message_id": item[1]} for item in old_posts}
         result = {}
+
         for new_post in new_posts:
             if new_post.message_id in old_posts:
                 continue
@@ -153,8 +163,10 @@ class GroupParser:
 
         return result
 
-    async def update_last_10_messages(self, last_msg: list[PostData], channel_id: int):
-        posts = [(item.id, item.message_id) for item in await self.db.get_posts_by_channel_id(channel_id=channel_id)]
+    async def update_last_10_messages(self, last_msg: list[PostData],
+                                      channel_id: int):
+        posts = [(item.id, item.message_id) for item in
+                 await self.db.get_posts_by_channel_id(channel_id=channel_id)]
 
         if posts:
             need_update_posts = await self.compare_posts(new_posts=last_msg,
@@ -179,7 +191,8 @@ class GroupParser:
     async def create_chanel_in_db(self, chanel: ChannelData):
         cn = Channel(chanel)
 
-        new_chanel_data = await self.db.add_channel(channel_data=chanel, chanel=cn)
+        new_chanel_data = await self.db.add_channel(channel_data=chanel,
+                                                    chanel=cn)
 
         return new_chanel_data
 
@@ -196,7 +209,8 @@ class GroupParser:
                                   title="None title",
                                   views_count=message_data['views'],
                                   reactions_count=all_reactions_count,
-                                  comments_channel_id=message_data['replies']['channel_id'])
+                                  comments_channel_id=message_data['replies'][
+                                      'channel_id'])
         return post_data_item
 
     async def get_limited_messages(self, entity, channel_id: int, limit=10):
@@ -207,12 +221,14 @@ class GroupParser:
             message = json.loads(msg.to_json())
 
             try:
-                list_post_data.append(await self.create_post_entity(message_data=message,
-                                                                    channel_id=channel_id))
+                list_post_data.append(
+                    await self.create_post_entity(message_data=message,
+                                                  channel_id=channel_id))
             except Exception:
                 continue
 
-        await self.update_last_10_messages(last_msg=list_post_data, channel_id=channel_id)
+        await self.update_last_10_messages(last_msg=list_post_data,
+                                           channel_id=channel_id)
 
         return list_post_data
 
@@ -228,8 +244,9 @@ class GroupParser:
         users = await self.get_users(entity=entity)
 
         if users is not None:
-            user_data_list = await self.create_users_in_db(users=users,
-                                                           channel_id=channel_id)
+            user_data_list = await self.create_users_in_db(
+                users=users,
+                channel_id=channel_id)
 
             return user_data_list
         else:
@@ -240,10 +257,12 @@ class GroupParser:
         channel_info = await self.get_full_channel_info(entity=entity)
 
         full_info = channel_info.to_dict()
-        last_total_users_in_chanel = [item.user_count for item in await self.db.get_channel(
-            channel_id=full_info['full_chat']['id'])]
-
-        return f"Новых подписчиков: {full_info['full_chat']['participants_count'] - last_total_users_in_chanel[0]}"
+        last_total_users_in_chanel = [item.user_count for item in
+                                      await self.db.get_channel(
+                                          channel_id=full_info['full_chat'][
+                                              'id'])]
+        count = full_info['full_chat']['participants_count']
+        return f"Новых подписчиков: {count - last_total_users_in_chanel[0]}"
 
     async def compare_messages(self, messages):
         ...
@@ -252,7 +271,8 @@ class GroupParser:
         try:
             result = {"all_users": None}
             tmp = []
-            async for user in client.iter_participants(entity=entity, aggressive=True):
+            async for user in client.iter_participants(entity=entity,
+                                                       aggressive=True):
                 tmp.append(user.to_dict())
 
             result['all_users'] = tmp
@@ -278,26 +298,35 @@ class GroupParser:
                 if entity_to_dict['left'] is True:
                     await self._join(entity)
 
-                if not await self.check_channel_in_db(channel_id=entity_to_dict['id']):
+                if not await self.check_channel_in_db(
+                        channel_id=entity_to_dict['id']):
 
-                    channel_info = await self.get_full_channel_info(entity=entity)
+                    channel_info = await self.get_full_channel_info(
+                        entity=entity)
                     full_channel_info = channel_info.to_dict()
+
+                    about = full_channel_info['full_chat']['about']
+                    co = full_channel_info['full_chat']['participants_count']
 
                     channel = ChannelData(id=entity_to_dict['id'],
                                           name=entity_to_dict['title'],
                                           link=task.target_url,
-                                          description=full_channel_info['full_chat']['about'],
-                                          user_count=full_channel_info['full_chat']['participants_count'])
+                                          description=about,
+                                          user_count=co
+                                          )
 
                     await self.create_chanel_in_db(chanel=channel)
 
-                    await self.add_unique_users(entity=entity, channel_id=entity_to_dict['id'])
+                    await self.add_unique_users(
+                        entity=entity,
+                        channel_id=entity_to_dict['id'])
 
                 else:
-                    # ТУТ БУДЕМ ТОЛЬКО ОТДАВАТЬ ДАННЫЕ КОТОРЫЕ БУДУТ РАЗ В СУТКИ ОБНОВЛЯТЬСЯ И КЭШИРОВАТЬСЯ
 
-                    messages = await self.get_limited_messages(entity=entity,
-                                                               channel_id=entity_to_dict['id'])
+                    messages = await self.get_limited_messages(
+                        entity=entity,
+                        channel_id=entity_to_dict['id'])
+
                     print(messages)
 
             task_item_update = {
@@ -305,7 +334,8 @@ class GroupParser:
                 "status": "success"
             }
 
-            await self.db.update_task_item(task_item_id=task.id, update_data=task_item_update)
+            await self.db.update_task_item(task_item_id=task.id,
+                                           update_data=task_item_update)
 
         except Exception as e:
             print(e)
@@ -314,4 +344,5 @@ class GroupParser:
                 "status": "error"
             }
 
-            await self.db.update_task_item(task_item_id=task.id, update_data=task_item_update)
+            await self.db.update_task_item(task_item_id=task.id,
+                                           update_data=task_item_update)

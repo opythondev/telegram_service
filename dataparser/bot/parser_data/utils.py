@@ -1,5 +1,3 @@
-from datetime import datetime as dt
-
 from bot.database.models.task import TaskData
 from bot.database.models.task_item import TaskItemData
 
