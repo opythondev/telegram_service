@@ -7,11 +7,3 @@ client2 = TelegramClient('client2',
                          CLIENTS['client2'][0], CLIENTS['client2'][1]).start()
 client3 = TelegramClient('client3',
                          CLIENTS['client3'][0], CLIENTS['client3'][1]).start()
-
-
-
-
-
-
-
-
