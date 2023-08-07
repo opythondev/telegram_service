@@ -12,7 +12,7 @@ from bot.clients import client
 from bot.database.models.posts import Post, PostData
 from bot.database.models.user import UserData, User
 from bot.database.models.user_channel import UserChannel, UserChannelData
-from bot.parser_data.utils import convert_dict_to_task_item, convert_dict_to_post_data
+from bot.parser_data.utils import convert_dict_to_task_item
 from bot.database.models.channel import Channel, ChannelData
 
 
@@ -233,7 +233,7 @@ class GroupParser:
             for reaction_item in message_data['reactions']['results']:
                 all_reactions_count += reaction_item['count']
         except Exception as e:
-            logging.info(f"Error: ", {e})
+            logging.info(f"Error: {e}")
 
         try:
             replies = message_data['replies']['channel_id']

@@ -1,4 +1,3 @@
-from bot.database.models.posts import PostData
 from bot.database.models.task import TaskData
 from bot.database.models.task_item import TaskItemData
 
@@ -35,11 +34,3 @@ async def convert_task_item_to_dict(task_item: TaskItemData) -> dict:
             "channel_id": task_item.channel_id,
             "id": task_item.id,
             "status": task_item.status}
-
-
-async def convert_dict_to_post_data(post_data: dict) -> PostData:
-    return PostData(task_id=task_item['task_id'],
-                        target_url=task_item['target_url'],
-                        channel_id=task_item['channel_id'],
-                        id=task_item['id'],
-                        status="created")
