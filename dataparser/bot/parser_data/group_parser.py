@@ -12,7 +12,7 @@ from bot.clients import client
 from bot.database.models.posts import Post, PostData
 from bot.database.models.user import UserData, User
 from bot.database.models.user_channel import UserChannel, UserChannelData
-from bot.parser_data.utils import convert_dict_to_task_item
+from bot.parser_data.utils import convert_dict_to_task_item, convert_dict_to_channel_data
 from bot.database.models.channel import Channel, ChannelData
 
 
@@ -89,7 +89,7 @@ class GroupParser:
 
         # CHECK USER IN DB
         users_in_db = {
-            f"{item.id}": UserData(
+            item.id: UserData(
                 id=item.id,
                 role=item.role,
                 full_name=item.full_name,
@@ -102,7 +102,7 @@ class GroupParser:
 
         # CHECK USER IN USER_CHANNEL
         all_users_in_group = {
-            f"{item.user_id}": UserData(
+            item.user_id: UserData(
                 id=item.id,
                 channel_id=item.channel_id,
                 user_id=item.user_id
@@ -163,7 +163,6 @@ class GroupParser:
             for item in new_posts:
 
                 if item.message_id in diff:
-
                     get_index = index_for_update.index(max(index_for_update))
                     index = index_for_update.pop(get_index)
 
@@ -253,8 +252,11 @@ class GroupParser:
         except Exception as e:
             logging.info(f"error: {e}")
             text = ''
-
-        views_count = message_data['views']
+        try:
+            views_count = message_data['views']
+        except Exception as e:
+            logging.info(f"error: {e}")
+            views_count = 0
 
         if text:
             post_data_item = PostData(channel_id=message_data['peer_id']['channel_id'],
@@ -302,11 +304,12 @@ class GroupParser:
 
     async def add_unique_users(self, entity, channel_id: int):
 
-        users = await self.get_users(entity=entity)
+        all_users_in_channel = await self.get_users(entity=entity)
 
-        if users is not None:
+        if all_users_in_channel is not None:
+
             user_data_list = await self.create_users_in_db(
-                users=users,
+                users=all_users_in_channel,
                 channel_id=channel_id)
 
             return user_data_list
@@ -327,6 +330,7 @@ class GroupParser:
         return f"Новых подписчиков: {user_count - last_total_users_in_chanel[0]}"
 
     async def get_users(self, entity) -> None | dict:
+
         try:
             result = {"all_users": None}
             tmp = []
@@ -335,9 +339,12 @@ class GroupParser:
                 tmp.append(user.to_dict())
 
             result['all_users'] = tmp
+
             return result
+
         except Exception as e:
             print(f"Undefined exception: {e}")
+
             return None
 
     async def start_parsing(self):
@@ -357,18 +364,16 @@ class GroupParser:
                 if entity_to_dict['left'] is True:
                     await self._join(entity)
 
-                if not await self.check_channel_in_db(
-                        channel_id=entity_to_dict['id']):
+                if not await self.check_channel_in_db(channel_id=entity_to_dict['id']):
 
                     channel_info = await self.get_full_channel_info(
                         entity=entity)
+
                     full_channel_info = channel_info.to_dict()
 
-                    channel = ChannelData(id=entity_to_dict['id'],
-                                          name=entity_to_dict['title'],
-                                          link=task.target_url,
-                                          description=full_channel_info['full_chat']['about'],
-                                          user_count=full_channel_info['full_chat']['participants_count'])
+                    channel = await convert_dict_to_channel_data(link=task.target_url,
+                                                                 entity_data=entity_to_dict,
+                                                                 channel_info=full_channel_info)
 
                     await self.create_chanel_in_db(chanel=channel)
 
@@ -376,13 +381,13 @@ class GroupParser:
                         entity=entity,
                         channel_id=entity_to_dict['id'])
 
-                else:
-
-                    messages = await self.get_limited_messages(
+                    await self.get_limited_messages(
                         entity=entity)
 
-                    print(messages)
-                    print("len messages: ", len(messages))
+                else:
+
+                    await self.get_limited_messages(
+                        entity=entity)
 
             # CHANGE STATUS
             task_item_update = {
