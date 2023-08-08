@@ -32,6 +32,6 @@ class RedisClient:
                                db=self.db,
                                decode_responses=True)
 
-    async def pub_task(self, chanel: str,  data: dict):
+    async def pub_task(self, chanel: str, data: dict):
         with self._connect_redis() as redis_cli:
             redis_cli.publish(chanel, json.dumps(data, indent=4))

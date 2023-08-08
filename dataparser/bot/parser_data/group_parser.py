@@ -210,13 +210,15 @@ class GroupParser:
                         idx = all_id.index(id_)
                         all_id.pop(idx)
 
-            for post in posts:
-                if post[0] in all_id and post[2] != "old":
-                    await self.db.update_post(post_id=post[0], data={"state": "old"})
+            await self.update_status_post(all_id=all_id, posts=posts)
         else:
-            for post in posts:
-                if post[0] in all_id and post[2] != "old":
-                    await self.db.update_post(post_id=post[0], data={"state": "old"})
+            await self.update_status_post(all_id=all_id, posts=posts)
+
+    async def update_status_post(self, all_id, posts):
+
+        for post in posts:
+            if post[0] in all_id and post[2] != "old":
+                await self.db.update_post(post_id=post[0], data={"state": "old"})
 
     async def create_chanel_in_db(self, chanel: ChannelData):
         cn = Channel(chanel)
