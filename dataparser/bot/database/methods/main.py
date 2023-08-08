@@ -57,10 +57,9 @@ class Database:
         return await add_transaction_autoincrement(items)
 
     async def update_posts(self, items: list[dict]):
-        # TODO подумать над оптимизацией
         for item in items:
             for k, v in item.items():
-                await update_post_by_post_id(post_id=k, data=v)
+                await update_post_by_post_id(post_id=k, data=v.to_dict())
 
     async def update_post(self, post_id: int, data: dict):
         await update_post_by_post_id(post_id=post_id, data=data)

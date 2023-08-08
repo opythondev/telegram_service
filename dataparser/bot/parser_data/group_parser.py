@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 from telethon.tl.functions.channels import JoinChannelRequest, \
@@ -75,9 +76,7 @@ class GroupParser:
         u_data = UserData(
             id=int(user['id']),
             role=1,
-            full_name=str(await self.concat_full_name(
-                f_name=user['first_name'],
-                l_name=user['last_name'])),
+            full_name=str(await self.concat_full_name(f_name=user['first_name'], l_name=user['last_name'])),
             user_name=str(user['username'])
         )
 
@@ -115,13 +114,13 @@ class GroupParser:
                 if user['id'] in all_users_in_group:
                     continue
                 else:
-                    user_for_user_channel.append(
-                        await self._cast_to_user_data(user=user))
+                    user_for_user_channel.append(await self._cast_to_user_data(user=user))
+                continue
             else:
-                user_list.append(
-                    User(await self._cast_to_user_data(user=user)))
-                user_for_user_channel.append(
-                    await self._cast_to_user_data(user=user))
+
+                user_list.append(User(await self._cast_to_user_data(user=user)))
+
+                user_for_user_channel.append(await self._cast_to_user_data(user=user))
 
         if user_list:
             await self.db.add_users(users=user_list)
@@ -147,8 +146,7 @@ class GroupParser:
 
         await self.db.add_user_channel(items=user_channel_list)
 
-    async def compare_posts(self, new_posts: list[PostData],
-                            old_posts: list[tuple]) -> list:
+    async def compare_posts(self, new_posts: list[PostData], old_posts: list[tuple]) -> list:
         result = []
 
         index_for_update = [index[0] for index in old_posts]
@@ -163,8 +161,10 @@ class GroupParser:
             for item in new_posts:
 
                 if item.message_id in diff:
+
                     get_index = index_for_update.index(max(index_for_update))
                     index = index_for_update.pop(get_index)
+                    item.id = index
 
                     result.append({
                         index: item
@@ -185,7 +185,7 @@ class GroupParser:
             new_posts = await self.compare_posts(new_posts=last_posts,
                                                  old_posts=posts)
 
-            if len(posts) + len(new_posts) <= MAX_UPDATE_MESSAGES:
+            if len(posts) + len(new_posts) < MAX_UPDATE_MESSAGES:
                 new_items = []
 
                 for i in new_posts:
@@ -195,6 +195,7 @@ class GroupParser:
                 await self.db.add_posts(items=[Post(item) for item in new_items])
 
             else:
+
                 await self.db.update_posts(items=new_posts)
 
         else:
@@ -232,30 +233,50 @@ class GroupParser:
         all_reactions_count = 0
         try:
             for reaction_item in message_data['reactions']['results']:
-                all_reactions_count += reaction_item['count']
+
+                if reaction_item is not None:
+                    all_reactions_count += reaction_item['count']
+                else:
+                    continue
+
         except Exception as e:
-            logging.info(f"Error: {e}")
+            logging.info(f"Error all_reactions_count in PostData: {e}")
 
         try:
             replies = message_data['replies']['channel_id']
             if replies is None:
                 replies = 0
         except Exception as e:
-            logging.info(f"error: {e}")
+            logging.info(f"Error replies in PostData: {e}")
             replies = 0
 
-        message_id = message_data['id']
-        date = str(message_data['date'])
+        try:
+            message_id = message_data['id']
+        except Exception as e:
+            message_id = 0
+            logging.info(f"Error message_id in PostData: {e}")
+
+        try:
+            date = str(message_data['date'])
+        except Exception as e:
+            logging.info(f"Error date in PostData: {e}")
+            date = str(datetime.datetime.utcnow())
 
         try:
             text = message_data['message']
         except Exception as e:
-            logging.info(f"error: {e}")
+            logging.info(f"Error message in PostData: {e}")
             text = ''
+
         try:
             views_count = message_data['views']
+
+            if views_count is None:
+                views_count = 0
+
         except Exception as e:
-            logging.info(f"error: {e}")
+
+            logging.info(f"Error view_count in PostData: {e}")
             views_count = 0
 
         if text:
@@ -291,7 +312,7 @@ class GroupParser:
                     await self.create_post_entity(message_data=msg.to_dict())
                 )
             except Exception as e:
-                logging.info(f"error in get_limited_message: {e}")
+                logging.info(f"Error in get_limited_message: {e}")
                 continue
 
         await self.update_last_messages(last_posts=list_post_data)
