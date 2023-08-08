@@ -1,4 +1,3 @@
-import json
 import logging
 
 from telethon.tl.functions.channels import JoinChannelRequest, \
@@ -7,6 +6,7 @@ from telethon.tl.types import PeerChat, PeerUser, PeerChannel, \
     Message as TelethonMessage, User as TelethonUser, \
     Channel as ChannelTelethon, Chat
 
+from bot.configs.settings import MAX_UPDATE_MESSAGES
 from bot.database.methods.main import Database
 from bot.clients import client
 from bot.database.models.posts import Post, PostData
@@ -148,47 +148,77 @@ class GroupParser:
         await self.db.add_user_channel(items=user_channel_list)
 
     async def compare_posts(self, new_posts: list[PostData],
-                            old_posts: list[tuple]) -> dict:
+                            old_posts: list[tuple]) -> list:
+        result = []
 
-        ids = [item[0] for item in old_posts]
-        ids.sort()
+        index_for_update = [index[0] for index in old_posts]
 
-        old_posts = {item[1]: {"id": item[0],
-                               "message_id": item[1]} for item in old_posts}
-        result = {}
+        msg_id_old = [item[1] for item in old_posts]
+        msg_id_new = [item.message_id for item in new_posts]
 
-        for new_post in new_posts:
-            if new_post.message_id in old_posts:
-                continue
-            else:
-                result[ids.pop(0)] = new_post
+        diff = list(set(msg_id_old) ^ set(msg_id_new))
+
+        if diff:
+
+            for item in new_posts:
+
+                if item.message_id in diff:
+
+                    get_index = index_for_update.index(max(index_for_update))
+                    index = index_for_update.pop(get_index)
+
+                    result.append({
+                        index: item
+                    })
 
         return result
 
-    async def update_last_10_messages(self, last_msg: list[PostData],
-                                      channel_id: int):
-        posts = [(item.id, item.message_id) for item in
+    async def update_last_messages(self, last_posts: list[PostData]):
+        new_posts = []
+
+        channel_id = last_posts[0].channel_id
+
+        posts = [(item.id, item.message_id, item.state) for item in
                  await self.db.get_posts_by_channel_id(channel_id=channel_id)]
 
         if posts:
-            need_update_posts = await self.compare_posts(new_posts=last_msg,
-                                                         old_posts=posts)
 
-            await self.db.update_posts(items=[{
-                "id": item.id,
-                "channel_id": item.channel_id,
-                "message_id": item.message_id,
-                "date": item.date,
-                "photo": item.photo,
-                "state": item.title,
-                "text": item.text,
-                "reactions_count": item.reactions_count,
-                "views_count": item.views_count,
-                "comments_channel_id": item.comments_channel_id
-            }
-                for item in need_update_posts])
+            new_posts = await self.compare_posts(new_posts=last_posts,
+                                                 old_posts=posts)
+
+            if len(posts) + len(new_posts) <= MAX_UPDATE_MESSAGES:
+                new_items = []
+
+                for i in new_posts:
+                    for k, v in i.items():
+                        new_items.append(v)
+
+                await self.db.add_posts(items=[Post(item) for item in new_items])
+
+            else:
+                await self.db.update_posts(items=new_posts)
+
         else:
-            await self.db.add_posts(items=[Post(item) for item in last_msg])
+            await self.db.add_posts(items=[Post(item) for item in last_posts])
+
+        all_id = [post[0] for post in posts]
+
+        if new_posts:
+            for new_post in new_posts:
+                for id_ in new_post.keys():
+                    if id_ in all_id:
+                        idx = all_id.index(id_)
+                        all_id.pop(idx)
+
+            await self.update_status_post(all_id=all_id, posts=posts)
+        else:
+            await self.update_status_post(all_id=all_id, posts=posts)
+
+    async def update_status_post(self, all_id, posts):
+
+        for post in posts:
+            if post[0] in all_id and post[2] != "old":
+                await self.db.update_post(post_id=post[0], data={"state": "old"})
 
     async def create_chanel_in_db(self, chanel: ChannelData):
         cn = Channel(chanel)
@@ -199,26 +229,53 @@ class GroupParser:
         return new_chanel_data
 
     async def create_post_entity(self, message_data: dict):
-        channel_id = message_data['peer_id']['channel_id']
-        all_reactions_count = 0
 
-        for reaction_item in message_data['reactions']['results']:
-            all_reactions_count += reaction_item['count']
+        all_reactions_count = 0
+        try:
+            for reaction_item in message_data['reactions']['results']:
+                all_reactions_count += reaction_item['count']
+        except Exception as e:
+            logging.info(f"Error: {e}")
 
         try:
             replies = message_data['replies']['channel_id']
+            if replies is None:
+                replies = 0
         except Exception as e:
             logging.info(f"error: {e}")
             replies = 0
 
-        post_data_item = PostData(channel_id=channel_id,
-                                  message_id=message_data['id'],
-                                  date=str(message_data['date']),
-                                  text=message_data['message'],
-                                  title="new",
-                                  views_count=message_data['views'],
-                                  reactions_count=all_reactions_count,
-                                  comments_channel_id=replies)
+        message_id = message_data['id']
+        date = str(message_data['date'])
+
+        try:
+            text = message_data['message']
+        except Exception as e:
+            logging.info(f"error: {e}")
+            text = ''
+
+        views_count = message_data['views']
+
+        if text:
+            post_data_item = PostData(channel_id=message_data['peer_id']['channel_id'],
+                                      message_id=message_id,
+                                      date=date,
+                                      text=text,
+                                      state="new",
+                                      views_count=views_count,
+                                      reactions_count=all_reactions_count,
+                                      comments_channel_id=replies)
+        else:
+            post_data_item = PostData(channel_id=message_data['peer_id']['channel_id'],
+                                      message_id=message_id,
+                                      date=date,
+                                      text=text,
+                                      state="new",
+                                      views_count=views_count,
+                                      reactions_count=all_reactions_count,
+                                      comments_channel_id=replies,
+                                      type="Media/Docs")
+
         return post_data_item
 
     async def get_limited_messages(self, entity, limit=10):
@@ -229,13 +286,13 @@ class GroupParser:
 
             try:
                 list_post_data.append(
-                    await self.create_post_entity(message_data=msg.to_dict()))
+                    await self.create_post_entity(message_data=msg.to_dict())
+                )
             except Exception as e:
-                logging.info(f"error: {e}")
+                logging.info(f"error in get_limited_message: {e}")
                 continue
 
-        # await self.update_last_10_messages(last_msg=list_post_data,
-        #                                    channel_id=channel_id)
+        await self.update_last_messages(last_posts=list_post_data)
 
         return list_post_data
 
@@ -325,6 +382,7 @@ class GroupParser:
                         entity=entity)
 
                     print(messages)
+                    print("len messages: ", len(messages))
 
             # CHANGE STATUS
             task_item_update = {

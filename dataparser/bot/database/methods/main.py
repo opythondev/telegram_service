@@ -3,7 +3,7 @@ from bot.database.methods.post import add_item_autoincrement, \
 from bot.database.methods.get import get_channel_by_id, \
     get_posts_by_channel_id, \
     get_all_users_in_channel_by_cid, get_all_users
-from bot.database.methods.put import update_task_by_id, update_task_item_by_id
+from bot.database.methods.put import update_task_by_id, update_task_item_by_id, update_post_by_post_id
 from bot.database.models.channel import ChannelData, Channel
 from bot.database.models.posts import Post
 from bot.database.models.task_item import TaskItem
@@ -57,7 +57,13 @@ class Database:
         return await add_transaction_autoincrement(items)
 
     async def update_posts(self, items: list[dict]):
-        ...
+        # TODO подумать над оптимизацией
+        for item in items:
+            for k, v in item.items():
+                await update_post_by_post_id(post_id=k, data=v)
+
+    async def update_post(self, post_id: int, data: dict):
+        await update_post_by_post_id(post_id=post_id, data=data)
 
     async def get_posts_by_channel_id(self, channel_id: int):
         return await get_posts_by_channel_id(channel_id)
