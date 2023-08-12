@@ -8,9 +8,9 @@ from bot.database.main import Base
 
 class UserData(BaseModel):
     id: int
-    role: int
-    full_name: str
-    user_name: str
+    full_name: str = "null"
+    user_name: str = "null"
+    role: int = 1
     phone: str = "null"
     email: str = "null"
     is_subscribed: bool = False
