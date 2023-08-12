@@ -161,7 +161,6 @@ class GroupParser:
             for item in new_posts:
 
                 if item.message_id in diff:
-
                     get_index = index_for_update.index(max(index_for_update))
                     index = index_for_update.pop(get_index)
                     item.id = index
@@ -231,75 +230,58 @@ class GroupParser:
     async def create_post_entity(self, message_data: dict):
 
         all_reactions_count = 0
-        try:
-            for reaction_item in message_data['reactions']['results']:
+        reactions = message_data.get('reactions', None)
+        if reactions is not None:
+            reactions_data = reactions.get('results', None)
 
-                if reaction_item is not None:
-                    all_reactions_count += reaction_item['count']
-                else:
-                    continue
+            if reactions_data:
+                for reaction_item in reactions_data:
 
-        except Exception as e:
-            logging.info(f"Error all_reactions_count in PostData: {e}")
+                    if reaction_item is not None:
+                        all_reactions_count += reaction_item['count']
+                    else:
+                        continue
 
-        try:
-            replies = message_data['replies']['channel_id']
-            if replies is None:
-                replies = 0
-        except Exception as e:
-            logging.info(f"Error replies in PostData: {e}")
-            replies = 0
+        replies = message_data.get('replies', None)
+        if replies is not None:
+            replies_cid = replies.get('channel_id', 0)
+            if replies_cid is None:
+                replies_cid = 0
+        else:
+            replies_cid = 0
 
-        try:
-            message_id = message_data['id']
-        except Exception as e:
-            message_id = 0
-            logging.info(f"Error message_id in PostData: {e}")
+        message_id = message_data.get('id', 0)
+        date = str(message_data.get('date', str(datetime.datetime.utcnow())))
 
-        try:
-            date = str(message_data['date'])
-        except Exception as e:
-            logging.info(f"Error date in PostData: {e}")
-            date = str(datetime.datetime.utcnow())
-
-        try:
-            text = message_data['message']
-        except Exception as e:
-            logging.info(f"Error message in PostData: {e}")
+        text = message_data.get('message', '')
+        if text is None:
             text = ''
 
-        try:
-            views_count = message_data['views']
-
-            if views_count is None:
-                views_count = 0
-
-        except Exception as e:
-
-            logging.info(f"Error view_count in PostData: {e}")
+        views_count = message_data.get('views', 0)
+        if views_count is None:
             views_count = 0
 
-        if text:
-            post_data_item = PostData(channel_id=message_data['peer_id']['channel_id'],
-                                      message_id=message_id,
-                                      date=date,
-                                      text=text,
-                                      state="new",
-                                      views_count=views_count,
-                                      reactions_count=all_reactions_count,
-                                      comments_channel_id=replies)
-        else:
-            post_data_item = PostData(channel_id=message_data['peer_id']['channel_id'],
-                                      message_id=message_id,
-                                      date=date,
-                                      text=text,
-                                      state="new",
-                                      views_count=views_count,
-                                      reactions_count=all_reactions_count,
-                                      comments_channel_id=replies,
-                                      type="Media/Docs")
+        channel_id = message_data['peer_id']['channel_id']
 
-        return post_data_item
+        if text:
+            return PostData(channel_id=channel_id,
+                            message_id=message_id,
+                            date=date,
+                            text=text,
+                            state="new",
+                            views_count=views_count,
+                            reactions_count=all_reactions_count,
+                            comments_channel_id=replies_cid)
+        else:
+            return PostData(channel_id=channel_id,
+                            message_id=message_id,
+                            date=date,
+                            text=text,
+                            state="new",
+                            views_count=views_count,
+                            reactions_count=all_reactions_count,
+                            comments_channel_id=replies_cid,
+                            type="Media/Docs")
 
     async def get_limited_messages(self, entity, limit=10):
 
