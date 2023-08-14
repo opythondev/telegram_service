@@ -13,6 +13,14 @@ class UserChannelData(BaseModel):
     channel_id: int
     create_at: datetime.datetime
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "channel_id": self.channel_id,
+            "create_at": self.create_at
+        }
+
 
 class UserChannel(Base):
     __table__ = Table(

@@ -8,7 +8,7 @@ class STask:
 
     def __init__(self, task_data: dict):
         self.task_data = task_data
-        self.db = Database(task_data["user_id"])
+        self.db = Database()
         self.redis_cli = RedisClient()
 
     async def send_task_to_bot(self):

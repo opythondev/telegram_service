@@ -7,6 +7,7 @@ load_dotenv()
 
 SECRET: Final = os.getenv("SECRET")
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+POST_QUERY_TOKEN = os.getenv("POST_QUERY_TOKEN")
 
 DB_NAME = os.getenv("NAME")
 DB_LOGIN = os.getenv("LOGIN")

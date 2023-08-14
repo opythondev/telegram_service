@@ -34,7 +34,7 @@ async def update_task_item_by_id(task_item_id: int, data: dict):
                 .execution_options(synchronize_session="fetch")
             await s.execute(q)
             await s.commit()
-            logging.info(f"item update task ID: {task_item_id}"
+            logging.info(f"item update task_item ID: {task_item_id}"
                          f"in data base {datetime.now()}")
 
 
@@ -51,5 +51,5 @@ async def update_post_by_post_id(post_id: int, data: dict):
             await s.execute(q)
             await s.commit()
 
-            logging.info(f"item update task ID: {post_id}"
+            logging.info(f"item update POST ID: {post_id}"
                          f"in data base {datetime.now()}")
