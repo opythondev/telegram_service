@@ -34,8 +34,8 @@ class Database:
         await update_task_item_by_id(task_item_id=task_item_id,
                                      data=update_data)
 
-    async def add_channel(self, channel_data: ChannelData, chanel: Channel):
-        new_id = int(await add_item_autoincrement(chanel))
+    async def add_channel(self, channel_data: ChannelData, channel: Channel):
+        new_id = int(await add_item_autoincrement(channel))
 
         channel_data.id = new_id
 
