@@ -12,6 +12,15 @@ class ChannelData(BaseModel):
     description: str
     user_count: int
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "link": self.link,
+            "description": self.description,
+            "user_count": self.user_count
+        }
+
 
 class Channel(Base):
     __table__ = Table(

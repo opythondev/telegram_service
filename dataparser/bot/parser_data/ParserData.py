@@ -13,7 +13,7 @@ class ParserData:
     async def start_parse_event(self, data: dict):
         task = await convert_dict_to_task(data)
 
-        # TODO fix update func
+        # TODO fix update state func
         # await self.db.update_task(
         # task_id=task.id, update_data={"status": "process"})
 

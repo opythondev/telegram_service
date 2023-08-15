@@ -2,7 +2,7 @@ from bot.database.methods.post import add_item_autoincrement, \
     add_transaction_autoincrement
 from bot.database.methods.get import get_channel_by_id, \
     get_posts_by_channel_id, \
-    get_all_users_in_channel_by_cid, get_all_users
+    get_all_users_in_channel_by_cid, get_all_users, get_new_msg_by_cin
 from bot.database.methods.put import update_task_by_id, update_task_item_by_id, update_post_by_post_id
 from bot.database.models.channel import ChannelData, Channel
 from bot.database.models.posts import Post
@@ -72,3 +72,16 @@ class Database:
 
     async def get_all_users_in_channel(self, cid: int):
         return await get_all_users_in_channel_by_cid(cid=cid)
+
+    async def get_new_messages_by_channel_id(self, channel_id: int) -> dict:
+        return {item.id: {
+            "channel_id": item.channel_id,
+            "id": item.id,
+            "message_id": item.message_id,
+            "text": item.text,
+            "views_count": item.views_count,
+            "reactions_count": item.reactions_count,
+            "comments_channel_id": item.comments_channel_id,
+            "type": item.type
+        } for item in await get_new_msg_by_cin(cin=channel_id)
+        }

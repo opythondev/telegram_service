@@ -15,6 +15,7 @@ from bot.database.models.user import UserData, User
 from bot.database.models.user_channel import UserChannel, UserChannelData
 from bot.parser_data.utils import convert_dict_to_task_item, convert_dict_to_channel_data
 from bot.database.models.channel import Channel, ChannelData
+from bot.service.cache import Cache
 
 
 class GroupParser:
@@ -23,6 +24,7 @@ class GroupParser:
         self.task_data = task_data
         self._db = Database(uid=uid)
         self._cli = client
+        self._cache = Cache()
 
     async def _join(self, entity):
         return await self._cli(JoinChannelRequest(channel=entity))
@@ -117,9 +119,7 @@ class GroupParser:
                     user_for_user_channel.append(await self._cast_to_user_data(user=user))
                 continue
             else:
-
                 user_list.append(User(await self._cast_to_user_data(user=user)))
-
                 user_for_user_channel.append(await self._cast_to_user_data(user=user))
 
         if user_list:
@@ -161,13 +161,17 @@ class GroupParser:
             for item in new_posts:
 
                 if item.message_id in diff:
-                    get_index = index_for_update.index(max(index_for_update))
-                    index = index_for_update.pop(get_index)
-                    item.id = index
-
-                    result.append({
-                        index: item
-                    })
+                    try:
+                        get_index = index_for_update.index(max(index_for_update))
+                        index = index_for_update.pop(get_index)
+                        item.id = index
+                        item.state = "new"
+                        result.append({
+                            index: item
+                        })
+                    except Exception as e:
+                        logging.info(e)
+                        break
 
         return result
 
@@ -192,10 +196,11 @@ class GroupParser:
                         new_items.append(v)
 
                 await self._db.add_posts(items=[Post(item) for item in new_items])
-
+                logging.info(await self._cache.update_last_msg(channel_id=channel_id))
             else:
 
                 await self._db.update_posts(items=new_posts)
+                logging.info(await self._cache.update_last_msg(channel_id=channel_id))
 
         else:
             await self._db.add_posts(items=[Post(item) for item in last_posts])
@@ -356,9 +361,10 @@ class GroupParser:
 
                     await self._add_unique_users(entity=entity, channel_id=entity_to_dict['id'])
 
-                    await self._get_limited_messages(entity=entity)
+                    print(await self._get_limited_messages(entity=entity))
                 else:
-                    await self._get_limited_messages(entity=entity)
+                    print(await self._get_limited_messages(entity=entity))
+                    await self._add_unique_users(entity=entity, channel_id=entity_to_dict['id'])
 
             # CHANGE STATUS
             task_item_update = {

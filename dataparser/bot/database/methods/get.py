@@ -64,3 +64,11 @@ async def get_all_users_in_channel_by_cid(cid: int):
         data = await s.execute(q)
         curr = data.scalars()
     return curr
+
+
+async def get_new_msg_by_cin(cin: int):
+    async with async_session_maker() as s:
+        q = select(Post).filter(and_(Post.channel_id == cin, Post.state == "new", Post.type == "Text"))
+        data = await s.execute(q)
+        curr = data.scalars()
+    return curr

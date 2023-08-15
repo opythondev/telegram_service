@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from dependencies import get_token_header
+from dependencies import post_query_token
 from database.models.task import TaskData
 from service.s_task import STask
 from .utils import convert_task_to_dict
@@ -7,7 +7,7 @@ from .utils import convert_task_to_dict
 router = APIRouter(
     prefix="/task",
     tags=['task'],
-    dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(post_query_token)],
     responses={404: {"description": "Not found"}},
 )
 
