@@ -161,13 +161,17 @@ class GroupParser:
             for item in new_posts:
 
                 if item.message_id in diff:
-                    get_index = index_for_update.index(max(index_for_update))
-                    index = index_for_update.pop(get_index)
-                    item.id = index
-
-                    result.append({
-                        index: item
-                    })
+                    try:
+                        get_index = index_for_update.index(max(index_for_update))
+                        index = index_for_update.pop(get_index)
+                        item.id = index
+                        item.state = "new"
+                        result.append({
+                            index: item
+                        })
+                    except Exception as e:
+                        logging.info(e)
+                        break
 
         return result
 
@@ -192,11 +196,11 @@ class GroupParser:
                         new_items.append(v)
 
                 await self._db.add_posts(items=[Post(item) for item in new_items])
-                await self._cache.update_last_msg(channel_id=channel_id)
+                logging.info(await self._cache.update_last_msg(channel_id=channel_id))
             else:
 
                 await self._db.update_posts(items=new_posts)
-                await self._cache.update_last_msg(channel_id=channel_id)
+                logging.info(await self._cache.update_last_msg(channel_id=channel_id))
 
         else:
             await self._db.add_posts(items=[Post(item) for item in last_posts])
@@ -357,9 +361,9 @@ class GroupParser:
 
                     await self._add_unique_users(entity=entity, channel_id=entity_to_dict['id'])
 
-                    await self._get_limited_messages(entity=entity)
+                    print(await self._get_limited_messages(entity=entity))
                 else:
-                    await self._get_limited_messages(entity=entity)
+                    print(await self._get_limited_messages(entity=entity))
                     await self._add_unique_users(entity=entity, channel_id=entity_to_dict['id'])
 
             # CHANGE STATUS

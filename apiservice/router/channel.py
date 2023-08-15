@@ -20,7 +20,7 @@ async def get_channels_id():
 
 
 @router.get("/get_all_users/")
-async def get_channels_id(channel_id: int):
+async def get_all_users(channel_id: int):
     channel_f = ChannelService(channel_id=channel_id)
     data = await channel_f.get_all_users()
 
@@ -30,7 +30,7 @@ async def get_channels_id(channel_id: int):
 
 
 @router.get("/get_last_msg/")
-async def get_channels_id(channel_id: int):
+async def get_last_msg(channel_id: int):
     channel_f = ChannelService(channel_id=channel_id)
     data = await channel_f.get_last_msg()
 

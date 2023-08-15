@@ -34,8 +34,10 @@ class Cache:
 
     async def get_last_msg(self, channel_id: int):
         messages = await self._redis.get_last_messages(channel_id=channel_id)
-        if messages is None:
+        if not messages and messages is not None:
             messages_in_db = await self._db.get_new_messages_by_channel_id(channel_id=channel_id)
+            print("messages_in_db", messages_in_db)
             return await self._set_last_msg(channel_id=channel_id, data=str(json.dumps(messages_in_db, indent=4)))
         else:
+            print("messages", messages)
             return messages

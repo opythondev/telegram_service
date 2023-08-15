@@ -62,6 +62,6 @@ class RedisClient:
     async def clean_obj(self, key: str, **kwargs):
         with self._connect_redis() as redis_cli:
             redis_cli.delete(key)
-            # TODO доделать обновление новых сообщений
+
             if kwargs:
-                redis_cli.set(f"{key}", kwargs['data'])
+                redis_cli.set(key, kwargs['data'])
